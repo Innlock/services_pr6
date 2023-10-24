@@ -1,14 +1,9 @@
 version: '3'
 services:
-  web:
-    build: .
-    image: myflaskapp
-    ports:
-      - "5000:5000"
-    depends_on:
-      - db
   db:
     image: postgres:latest
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin
