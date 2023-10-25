@@ -41,16 +41,29 @@
 </head>
 <body>
     <div class="container">
-        <h2>Каталог услуг</h2>
+        <h2>Каталог услуг для бизнеса</h2>
         <table>
             <tr>
                 <th>Название услуги</th>
-                <th>Описание услуги</th>
+                <th>Цена услуги*</th>
             </tr>
-            {% for service in services %}
+            {% for service in services_business %}
             <tr>
                 <td>{{ service.name }}</td>
                 <td>{{ service.description }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <p>*Цена услуги указана за полный рабочий день, может варьироваться в зависимости от сложности заказа</p>
+        <hr>
+        <h2>Технический каталог услуг</h2>
+        <table>
+            <tr>
+                <th>Название услуги</th>
+            </tr>
+            {% for service in services_technical %}
+            <tr>
+                <td>{{ service.name }}</td>
             </tr>
             {% endfor %}
         </table>

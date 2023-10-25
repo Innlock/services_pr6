@@ -88,11 +88,13 @@ def messenger():
 @app.route('/services')
 @login_required
 def services():
-    if current_user.role != 'client':
+    if current_user.role == 'client':
         return "У вас нет доступа к этой странице"
-    # Здесь вы можете извлечь данные о услугах из базы данных и передать их в шаблон
-    return "Страница услуг для клиента"
+    serv_technical = Service.query.filter(Service.type == 'technical').all()
+    serv_business = Service.query.filter(Service.type == 'business').all()
+    return render_template('services.html', services_technical=serv_technical, services_business=serv_business)
 
 
 if __name__ == '__main__':
+    # drop_all_tables()
     app.run(debug=True, host='0.0.0.0', port=5000)

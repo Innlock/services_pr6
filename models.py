@@ -15,9 +15,7 @@ class Service(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
-
-    def __init__(self, name):
-        self.name = name
+    type = db.Column(db.String, nullable=False, default="business")
 
 
 # Модель пользователя

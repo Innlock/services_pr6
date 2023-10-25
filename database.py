@@ -2,12 +2,18 @@ from models import Service, User, Message
 from init import db, app
 from sqlalchemy import inspect
 
-services_data = [
-    "обработка (услуги администрирования)",
-    "хранение (услуги администрирования)",
-    "дизайн (услуги создания)",
-    "развитие (услуги создания)",
-    "проектирование (услуги создания)"
+services_data1 = [
+    ["Обработка (услуги администрирования)", "10000 руб", "business"],
+    ["Хранение (услуги администрирования)", "10000 руб", "business"],
+    ["Дизайн (услуги создания)", "5000 руб", "business"],
+    ["Развитие (услуги создания)", "7000 руб", "business"],
+    ["Проектирование (услуги создания)", "15000 руб", "business"]
+]
+services_data2 = [
+    ["Веб-серверы и хостинг-ресурсы", "technical"],
+    ["Облачные ресурсы", "technical"],
+    ["Системы мониторинга и отчетности", "technical"],
+    ["Серверное оборудование", "technical"]
 ]
 
 
@@ -18,8 +24,11 @@ def drop_all_tables():
 
 
 def fill_services():
-    for service_name in services_data:
-        service = Service(name=service_name)
+    for service_name in services_data1:
+        service = Service(name=service_name[0], description=service_name[1], type=service_name[2])
+        db.session.add(service)
+    for service_name in services_data2:
+        service = Service(name=service_name[0], type=service_name[1])
         db.session.add(service)
     db.session.commit()
 
