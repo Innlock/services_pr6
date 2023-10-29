@@ -1,0 +1,65 @@
+<head>
+    <title>Ваша страница</title>
+    <style>
+        /* Стили для шапки */
+        .header {
+            background-color: #333; /* Цвет фона шапки */
+            color: #fff; /* Цвет текста в шапке */
+            padding: 10px; /* Внутренний отступ шапки */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Стили для вкладок */
+        .tabs {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .tabs li {
+            display: inline;
+            margin-right: 20px;
+        }
+
+        .tabs a {
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        #username {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        #logout {
+            text-decoration: none;
+            color: #d5d5d5;
+        }
+        #login {
+            text-decoration: none;
+            color: #d5d5d5;
+        }
+    </style>
+</head>
+<div class="header">
+    <ul class="tabs">
+        <li><a href="/services">Services</a></li>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/messenger">Messenger</a></li>
+    </ul>
+    <div class="user-info">
+        <span id="username">{{ username }}</span>
+        {% if username != "" and username != "Клиент" %}
+            <a href="/logout" id="logout">Выйти</a>
+        {% else %}
+            <a href="/login" id="login">Войти</a>
+        {% endif %}
+    </div>
+</div>
+

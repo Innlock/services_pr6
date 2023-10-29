@@ -15,7 +15,7 @@ def load_user(user_id):
 # Роут для главной страницы
 @app.route('/')
 def index():
-    return "Добро пожаловать на главную страницу!"
+    return redirect(url_for('login'))
 
 
 # Роут для регистрации
@@ -60,7 +60,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for('dashboard'))
 
 
 # Роут для панели управления
@@ -79,22 +79,25 @@ def dashboard():
 @app.route('/messenger')
 @login_required
 def messenger():
-    if current_user.role == 'support':
-        return "Страница сообщений для сотрудника технической поддержки"
-    return "У вас нет доступа к этой странице"
+    if current_user.role == 'client':
+        return "У вас нет доступа к этой странице"
+    return render_template('messenger.html', username=current_user.username)
 
 
 # Роут для страницы услуг
 @app.route('/services')
-@login_required
 def services():
-    if current_user.role == 'client':
-        return "У вас нет доступа к этой странице"
     serv_technical = Service.query.filter(Service.type == 'technical').all()
     serv_business = Service.query.filter(Service.type == 'business').all()
-    return render_template('services.html', services_technical=serv_technical, services_business=serv_business)
+    for serv in serv_business:
+        composition = serv.composition.replace(".", ".\n")
+        serv.composition = composition
+    username = "Клиент"
+    if current_user.is_authenticated:
+        username = current_user.username
+    return render_template('services.html', services_technical=serv_technical,
+                           services_business=serv_business, username=username)
 
 
 if __name__ == '__main__':
-    # drop_all_tables()
     app.run(debug=True, host='0.0.0.0', port=5000)

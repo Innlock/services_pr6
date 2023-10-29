@@ -10,7 +10,7 @@
             padding: 0;
         }
         .container {
-            max-width: 800px;
+            max-width: 90%;
             margin: 0 auto;
             padding: 20px;
             background-color: #fff;
@@ -40,17 +40,24 @@
     </style>
 </head>
 <body>
+{% include 'header.html' %}
     <div class="container">
         <h2>Каталог услуг для бизнеса</h2>
         <table>
             <tr>
+                <th>Название группы</th>
                 <th>Название услуги</th>
+                <th>Состав услуги</th>
+                <th>Описание услуги</th>
                 <th>Цена услуги*</th>
             </tr>
             {% for service in services_business %}
             <tr>
+                <td>{{ service.group_name }}</td>
                 <td>{{ service.name }}</td>
+                <td>{{ service.composition }}</td>
                 <td>{{ service.description }}</td>
+                <td>{{ service.cost }}</td>
             </tr>
             {% endfor %}
         </table>
@@ -60,10 +67,14 @@
         <table>
             <tr>
                 <th>Название услуги</th>
+                <th>Единицы измерения услуги</th>
+                <th>Цена услуги</th>
             </tr>
             {% for service in services_technical %}
             <tr>
                 <td>{{ service.name }}</td>
+                <td>{{ service.composition }}</td>
+                <td>{{ service.cost }}</td>
             </tr>
             {% endfor %}
         </table>

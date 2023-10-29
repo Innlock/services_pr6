@@ -13,8 +13,11 @@ class Message(db.Model):
 # Таблица для услуг
 class Service(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    group_name = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(255), nullable=False)
+    composition = db.Column(db.Text, nullable=True)
     description = db.Column(db.Text, nullable=True)
+    cost = db.Column(db.String(50), nullable=True)
     type = db.Column(db.String, nullable=False, default="business")
 
 
