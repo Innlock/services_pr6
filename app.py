@@ -1,9 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from database import drop_all_tables
-from models import User, Service, Message
+from models import User, Service, Message, Dialog
 from init import app, db, login_manager
 
 
@@ -81,7 +81,46 @@ def dashboard():
 def messenger():
     if current_user.role == 'client':
         return "У вас нет доступа к этой странице"
-    return render_template('messenger.html', username=current_user.username)
+    user_dialogs = Dialog.query.filter(Dialog.participants.any(id=current_user.id)).all()
+    all_users = User.query.all()
+    return render_template('messenger.html', username=current_user.username, user_dialogs=user_dialogs,
+                           all_users=all_users)
+
+
+@app.route('/get_messages', methods=['POST'])
+def get_messages():
+    dialog_id = request.form.get('dialog_id')
+    messages = Message.query.filter_by(dialog_id=dialog_id).all()
+    message_list = [{'sender_id': message.sender_id, 'content': message.content} for message in messages]
+    return jsonify(message_list)
+
+
+@app.route('/send_message', methods=['POST'])
+@login_required
+def send_message():
+    recipient_id = request.form.get('recipient_id')
+    message_content = request.form.get('message')
+
+    # Проверяем, существует ли диалог между текущим пользователем и получателем
+    dialog = Dialog.query.filter(
+        (Dialog.participants.any(id=current_user.id)) & (Dialog.participants.any(id=recipient_id))
+    ).first()
+
+    if not dialog:
+        # Если диалога нет, создаем новый
+        dialog = Dialog()
+        dialog.participants.append(current_user)
+        dialog.participants.append(User.query.get(recipient_id))
+        db.session.add(dialog)
+        db.session.commit()
+
+    # Отправляем сообщение в диалог
+    message = Message(sender_id=current_user.id, recipient_id=recipient_id, dialog_id=dialog.id,
+                      content=message_content)
+    db.session.add(message)
+    db.session.commit()
+
+    return jsonify({'success': True})
 
 
 # Роут для страницы услуг

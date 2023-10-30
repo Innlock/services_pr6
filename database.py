@@ -42,7 +42,11 @@ services_data2 = [
 ]
 users = [
     ["user1", "123", "employee"],
-    ["support1", "123", "support"]
+    ["user2", "123", "employee"],
+    ["user3", "123", "employee"],
+    ["support1", "123", "support"],
+    ["support2", "123", "support"],
+    ["support3", "123", "support"]
 ]
 
 

@@ -1,13 +1,26 @@
 from init import db
 from flask_login import UserMixin
 
+dialog_participants = db.Table('dialog_participants',
+                               db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                               db.Column('dialog_id', db.Integer, db.ForeignKey('dialog.id'))
+                               )
+
+
+class Dialog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    participants = db.relationship('User', secondary=dialog_participants, back_populates='dialogs')
+    messages = db.relationship('Message', backref='dialog', lazy='dynamic')
+
 
 # Таблица для сообщений
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    dialog_id = db.Column(db.Integer, db.ForeignKey('dialog.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
 
 # Таблица для услуг
@@ -27,3 +40,4 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # Роли: 'client', 'employee', 'support'
+    dialogs = db.relationship('Dialog', secondary=dialog_participants, back_populates='participants')

@@ -2,10 +2,113 @@
 <html>
 <head>
     <title>Мессенджер</title>
+    <style>
+        .messenger-container {
+            display: flex;
+        }
+
+        /* Стили для списка диалогов (левая часть) */
+        .dialogs {
+            flex: 1;
+            padding: 20px;
+            border-right: 1px solid #ccc;
+        }
+
+        .dialog-list-item {
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .dialog-list-item:hover {
+            background-color: #f4f4f4;
+        }
+
+        /* Стили для сообщений (правая часть) */
+        .messages {
+            flex: 3;
+            padding: 20px;
+        }
+
+        .message-content {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f4f4f4;
+        }
+    </style>
 </head>
 <body>
 {% include 'header.html' %}
-    <h1>Мессенджер</h1>
-    <!-- Добавьте здесь разметку для мессенджера -->
+<h1>Мессенджер</h1>
+<div class="messenger-container">
+    <div class="dialogs">
+        {% for dialog in user_dialogs %}
+        <p class="dialog-list-item" data-dialog-id="{{ dialog.id }}">{{ dialog.id }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="messages">
+        <div id="message-content">
+            <!-- Пустой блок для сообщений -->
+        </div>
+    </div>
+    <!-- Форма для отправки сообщения -->
+    <form class="message-form" method="POST" action="/send_message">
+        <select name="recipient_id">
+            <option value="" disabled selected>Выберите получателя</option>
+            {% for user in all_users %}  <!-- Все пользователи в системе -->
+            {% if user.id != current_user.id %}
+            <option value="{{ user.id }}">{{ user.username }}</option>
+            {% endif %}
+            {% endfor %}
+        </select>
+        <input type="hidden" name="dialog_id" id="dialog-id" value="">
+        <input type="text" class="message-input" name="message" placeholder="Введите сообщение">
+        <button type="submit" class="send-button">Отправить</button>
+    </form>
+</div>
+
+<script>
+    // JavaScript для обновления сообщений при выборе диалога
+    document.querySelectorAll('.dialogs p').forEach(dialog => {
+        dialog.addEventListener('click', () => {
+            const dialogId = dialog.getAttribute('data-dialog-id');
+            fetch('/get_messages', {
+                method: 'POST',
+                body: new URLSearchParams({dialog_id: dialogId}),
+            })
+                .then(response => response.json())
+                .then(messages => {
+                    const messageContent = document.getElementById('message-content');
+                    messageContent.innerHTML = '';
+                    messages.forEach(message => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.textContent = `${message.sender_id}: ${message.content}`;
+                        messageContent.appendChild(messageDiv);
+                    });
+                });
+        });
+    });
+    // JavaScript для отправки сообщения без перезагрузки страницы
+        const messageForm = document.getElementById('message-form');
+        messageForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(messageForm);
+
+            fetch('/send_message', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Обновите отображение сообщений или выполните другие действия при успешной отправке
+                } else {
+                    // Обработайте ошибку, если что-то пошло не так
+                }
+            });
+        });
+</script>
+</body>
+</html>
 </body>
 </html>
