@@ -3,15 +3,30 @@
 <head>
     <title>Мессенджер</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
         .messenger-container {
             display: flex;
         }
 
-        /* Стили для списка диалогов (левая часть) */
         .dialogs {
             flex: 1;
             padding: 20px;
             border-right: 1px solid #ccc;
+            width: 20%;
+            max-height: 475px;
+            overflow: auto;
+        }
+
+        .messages-and-form {
+            width: 80%;
+            display: flex;
+            flex-direction: column;
         }
 
         .dialog-list-item {
@@ -20,54 +35,131 @@
         }
 
         .dialog-list-item:hover {
-            background-color: #f4f4f4;
+            background-color: #cecece;
         }
 
         /* Стили для сообщений (правая часть) */
         .messages {
             flex: 3;
+            width: 95%;
+            max-height: 550px;
             padding: 20px;
+            overflow: auto;
         }
 
-        .message-content {
-            margin-bottom: 10px;
+        .message-form {
+            position: fixed;
+            bottom: 0px;
+            width: 70%;
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Стили для выпадающего списка */
+        .message-form select {
             padding: 10px;
-            background-color: #f4f4f4;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        /* Стили для поля ввода сообщения */
+        .message-form .message-input {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            width: 60%;
+        }
+
+        /* Стили для кнопки отправки */
+        .message-form .send-button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        /* Стили для кнопки отправки при наведении */
+        .message-form .send-button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
 {% include 'header.html' %}
-<h1>Мессенджер</h1>
+
 <div class="messenger-container">
     <div class="dialogs">
+        <h3>Диалоги</h3>
         {% for dialog in user_dialogs %}
         <p class="dialog-list-item" data-dialog-id="{{ dialog.id }}">{{ dialog.id }}</p>
         {% endfor %}
     </div>
 
-    <div class="messages">
-        <div id="message-content">
-            <!-- Пустой блок для сообщений -->
+    <div class="messages-and-form">
+        <div class="messages">
+            <div id="message-content">
+                <!-- Пустой блок для сообщений -->
+            </div>
         </div>
+        <!-- Форма для отправки сообщения -->
+        <form class="message-form" method="POST" action="/send_message">
+            <select name="recipient_id">
+                <option value="" disabled selected>Выберите получателя</option>
+                {% for user in all_users %}  <!-- Все пользователи в системе -->
+                {% if user.id != current_user.id %}
+                <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+            <input type="hidden" name="dialog_id" id="dialog-id" value="">
+            <input type="text" class="message-input" name="message" placeholder="Введите сообщение">
+            <button type="submit" class="send-button">Отправить</button>
+        </form>
     </div>
-    <!-- Форма для отправки сообщения -->
-    <form class="message-form" method="POST" action="/send_message">
-        <select name="recipient_id">
-            <option value="" disabled selected>Выберите получателя</option>
-            {% for user in all_users %}  <!-- Все пользователи в системе -->
-            {% if user.id != current_user.id %}
-            <option value="{{ user.id }}">{{ user.username }}</option>
-            {% endif %}
-            {% endfor %}
-        </select>
-        <input type="hidden" name="dialog_id" id="dialog-id" value="">
-        <input type="text" class="message-input" name="message" placeholder="Введите сообщение">
-        <button type="submit" class="send-button">Отправить</button>
-    </form>
 </div>
 
 <script>
+    window.addEventListener('load', function () {
+        // Получаем значение dialog_id из страницы (например, из вашего шаблона Jinja)
+        const dialogId = '{{ dialog_id }}';
+
+        // Проверяем, что dialogId не равно 'None'
+        if (dialogId !== 'None') {
+            // Выполняем запрос сообщений и обновление формы
+            fetch('/get_messages', {
+                method: 'POST',
+                body: new URLSearchParams({dialog_id: dialogId}),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const messageList = data.message_list;
+
+                    const messageContent = document.getElementById('message-content');
+                    messageContent.innerHTML = '';
+                    messageList.forEach(message => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.textContent = `${message.sender_id}: ${message.content}`;
+                        messageContent.appendChild(messageDiv);
+                    });
+
+                    // Выбираем опцию с recipientId в выпадающем списке
+                    const recipientId = data.dialog_recipient_id;
+                    const recipientSelect = document.querySelector('select[name="recipient_id"]');
+                    if (recipientSelect) {
+                        const optionToSelect = recipientSelect.querySelector(`option[value="${recipientId}"]`);
+                        if (optionToSelect) {
+                            optionToSelect.selected = true;
+                        }
+                    }
+                });
+        }
+    });
     // JavaScript для обновления сообщений при выборе диалога
     document.querySelectorAll('.dialogs p').forEach(dialog => {
         dialog.addEventListener('click', () => {
@@ -77,36 +169,28 @@
                 body: new URLSearchParams({dialog_id: dialogId}),
             })
                 .then(response => response.json())
-                .then(messages => {
+                .then(data => {
+                    const messageList = data.message_list;
+
                     const messageContent = document.getElementById('message-content');
                     messageContent.innerHTML = '';
-                    messages.forEach(message => {
+                    messageList.forEach(message => {
                         const messageDiv = document.createElement('div');
                         messageDiv.textContent = `${message.sender_id}: ${message.content}`;
                         messageContent.appendChild(messageDiv);
                     });
+                    // Выбираем опцию с recipientId в выпадающем списке
+                    const recipientId = data.dialog_recipient_id;
+                    const recipientSelect = document.querySelector('select[name="recipient_id"]');
+                    if (recipientSelect) {
+                        const optionToSelect = recipientSelect.querySelector(`option[value="${recipientId}"]`);
+                        if (optionToSelect) {
+                            optionToSelect.selected = true;
+                        }
+                    }
                 });
         });
     });
-    // JavaScript для отправки сообщения без перезагрузки страницы
-        const messageForm = document.getElementById('message-form');
-        messageForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const formData = new FormData(messageForm);
-
-            fetch('/send_message', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Обновите отображение сообщений или выполните другие действия при успешной отправке
-                } else {
-                    // Обработайте ошибку, если что-то пошло не так
-                }
-            });
-        });
 </script>
 </body>
 </html>

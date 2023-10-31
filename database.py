@@ -77,7 +77,7 @@ def fill_users():
 
 fill_tables = False
 with app.app_context():
-    drop_all_tables()
+    # drop_all_tables()
     # проверить, существует ли таблица и выставить флаг, если нет
     inspector = inspect(db.engine)
     if "user" not in inspector.get_table_names() or "service" not in inspector.get_table_names():

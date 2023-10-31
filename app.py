@@ -3,7 +3,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from database import drop_all_tables
-from models import User, Service, Message, Dialog
+from models import User, Service, Message, Dialog, dialog_participants
 from init import app, db, login_manager
 
 
@@ -77,22 +77,31 @@ def dashboard():
 
 # Роут для страницы сообщений
 @app.route('/messenger')
+@app.route('/messenger/<int:dialog_id>')
 @login_required
-def messenger():
+def messenger(dialog_id=None):
     if current_user.role == 'client':
         return "У вас нет доступа к этой странице"
     user_dialogs = Dialog.query.filter(Dialog.participants.any(id=current_user.id)).all()
     all_users = User.query.all()
     return render_template('messenger.html', username=current_user.username, user_dialogs=user_dialogs,
-                           all_users=all_users)
+                           all_users=all_users, dialog_id=dialog_id)
 
 
 @app.route('/get_messages', methods=['POST'])
+@login_required
 def get_messages():
     dialog_id = request.form.get('dialog_id')
     messages = Message.query.filter_by(dialog_id=dialog_id).all()
-    message_list = [{'sender_id': message.sender_id, 'content': message.content} for message in messages]
-    return jsonify(message_list)
+    participant = (User.query
+                   .join(dialog_participants)
+                   .filter(dialog_participants.c.dialog_id == dialog_id)
+                   .filter(User.id != current_user.id)
+                   .first())
+    dialog_recipient_id = participant.id
+    message_list = [
+        {'sender_id': message.sender_id, 'content': message.content} for message in messages]
+    return jsonify({'dialog_recipient_id': dialog_recipient_id, 'message_list': message_list})
 
 
 @app.route('/send_message', methods=['POST'])
@@ -120,7 +129,7 @@ def send_message():
     db.session.add(message)
     db.session.commit()
 
-    return jsonify({'success': True})
+    return redirect('/messenger/' + str(dialog.id))
 
 
 # Роут для страницы услуг
