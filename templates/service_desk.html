@@ -97,7 +97,7 @@
     {% for ticket in tickets %}
     <tr>
         <td>{{ ticket.priority }}</td>
-        <td>{{ ticket.theme }}</td>
+        <td><a href="{{ url_for('ticket_description', ticket_id=ticket.id) }}">{{ ticket.theme }}</a></td>
         <td>{{ ticket.service.name }}</td>
         <td>{{ ticket.user_data }}</td>
         <td>{{ ticket.status }}</td>

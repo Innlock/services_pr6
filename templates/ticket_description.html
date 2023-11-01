@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Заявка #{{ ticket.id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .ticket-details {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+<h1>Заявка #{{ ticket.id }}</h1>
+<div class="ticket-details">
+    <p><strong>Приоритет:</strong> {{ ticket.priority }}</p>
+    <p><strong>Тема:</strong> {{ ticket.theme }}</p>
+    <p><strong>Услуга:</strong> {{ ticket.service.name }}</p>
+    <p><strong>Данные о пользователе:</strong> {{ ticket.user_data }}</p>
+    <p><strong>Статус:</strong> {{ ticket.status }}</p>
+    <p><strong>Описание:</strong> {{ ticket.description }}</p>
+    {% if current_user.role == 'support' %}
+    <p>
+    <form method="POST" action="/update_ticket/{{ ticket.id }}">
+        <select name="status">
+            <option value="in process">In process</option>
+            <option value="done">Done</option>
+        </select>
+        <button type="submit">Изменить</button>
+    </form>
+    </p>
+    {% endif %}
+</div>
+</body>
+</html>

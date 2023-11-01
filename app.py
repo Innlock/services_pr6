@@ -125,6 +125,16 @@ def update_ticket(ticket_id):
     return redirect(url_for('service_desk'))
 
 
+@app.route('/service_desk/<int:ticket_id>')
+@login_required
+def ticket_description(ticket_id):
+    ticket = Ticket.query.get(ticket_id)
+    if not ticket:
+        flash('Заявка не найдена!')
+        return redirect(url_for('service_desk'))
+    return render_template('ticket_description.html', ticket=ticket)
+
+
 # Роут для страницы сообщений
 @app.route('/messenger')
 @app.route('/messenger/<int:dialog_id>')
