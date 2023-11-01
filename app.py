@@ -1,9 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from database import drop_all_tables
-from models import User, Service, Message, Dialog, dialog_participants
+from models import User, Service, Message, Dialog, dialog_participants, Ticket
 from init import app, db, login_manager
 
 
@@ -64,16 +64,65 @@ def logout():
 
 
 # Роут для панели управления
-@app.route('/service_desk')
+@app.route('/service_desk', methods=['GET', 'POST'])
 def service_desk():
     username = get_username()
-    # if current_user.role == 'client':
-    #     return "Панель управления клиента"
-    # elif current_user.role == 'employee':
-    #     return "Панель управления рядового сотрудника"
-    # elif current_user.role == 'support':
-    #     return "Панель управления сотрудника технической поддержки"
-    return render_template('service_desk.html', username=username)
+    serv = []
+    if current_user.is_authenticated and current_user.role == 'support':
+        # Отображение всех заявок для пользователей с ролью 'support'
+        tickets = Ticket.query.join(Ticket.service).all()
+    else:
+        # Пользователи с ролью 'client' и 'employee'
+        if request.method == 'POST':
+            # Создание новой заявки
+            priority = request.form.get('priority')
+            theme = request.form.get('theme')
+            service_id = request.form.get('service')
+            user_data = request.form.get('user_data')
+            description = request.form.get('description')
+
+            if not priority or not theme or not service_id or not user_data or not description:
+                flash('Заполните все поля!')
+            else:
+                creator = None
+                if current_user.is_authenticated:
+                    creator = current_user
+                new_ticket = Ticket(priority=priority, theme=theme, service_id=service_id,
+                                    user_data=user_data, description=description, creator=creator)
+                db.session.add(new_ticket)
+                db.session.commit()
+                return 'Заявка успешно создана!'
+
+        # Отображение созданных заявок для пользователей с ролью 'employee'
+        tickets = []
+        type_serv = 'business'
+        if current_user.is_authenticated:
+            type_serv = 'technical'
+            tickets = current_user.tickets.all()
+        serv = Service.query.filter(Service.type == type_serv).all()
+    return render_template('service_desk.html', tickets=tickets, services=serv, username=username)
+
+
+@app.route('/update_ticket/<int:ticket_id>', methods=['POST'])
+@login_required
+def update_ticket(ticket_id):
+    if current_user.role != 'support':
+        flash('У вас нет разрешения для изменения заявок!')
+        return redirect(url_for('service_desk'))
+
+    ticket = Ticket.query.get(ticket_id)
+    if not ticket:
+        flash('Заявка не найдена!')
+        return redirect(url_for('service_desk'))
+
+    # Обновите статус заявки (в работе/выполнена)
+    new_status = request.form.get('status')
+    if new_status and new_status in ('in process', 'done'):
+        ticket.status = new_status
+        db.session.commit()
+        flash('Статус заявки обновлен!')
+
+    return redirect(url_for('service_desk'))
 
 
 # Роут для страницы сообщений
@@ -81,7 +130,7 @@ def service_desk():
 @app.route('/messenger/<int:dialog_id>')
 @login_required
 def messenger(dialog_id=None):
-    if current_user.role == 'client':
+    if not current_user.is_authenticated:
         return "У вас нет доступа к этой странице"
     user_dialogs_id = Dialog.query.filter(Dialog.participants.any(id=current_user.id)).all()
     for i in range(len(user_dialogs_id)):

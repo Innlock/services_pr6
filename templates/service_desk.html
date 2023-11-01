@@ -9,15 +9,113 @@
             margin: 0;
             padding: 0;
         }
+        h1 {
+            text-align: center;
+        }
 
-        .messenger-container {
-            display: flex;
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 400px;
+        }
+
+        select, input[type="text"], textarea {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        button[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
         }
     </style>
 </head>
 <body>
 {% include 'header.html' %}
 <h1>Service Desk</h1>
-<!-- Добавьте здесь разметку для Service Desk -->
+{% if current_user.role != 'support' %}
+<form method="POST">
+    <select name="priority">
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+    </select>
+    <input type="text" name="theme" placeholder="Тема" required>
+    <select name="service">
+        {% for service in services %}
+        <option value="{{ service.id }}">{{ service.name }}</option>
+        {% endfor %}
+    </select>
+    <input type="text" name="user_data" placeholder="Данные о пользователе" required>
+    <textarea name="description" placeholder="Описание проблемы" required></textarea>
+    <button type="submit">Создать заявку</button>
+</form>
+{% endif %}
+
+{% if current_user.is_authenticated %}
+<table>
+    <tr>
+        <th>Приоритет</th>
+        <th>Тема</th>
+        <th>Услуга</th>
+        <th>Данные о пользователе</th>
+        <th>Статус</th>
+        <th>Описание</th>
+        {% if current_user.role == 'support' %}
+        <th>Изменить статус</th>
+        {% endif %}
+    </tr>
+    {% for ticket in tickets %}
+    <tr>
+        <td>{{ ticket.priority }}</td>
+        <td>{{ ticket.theme }}</td>
+        <td>{{ ticket.service.name }}</td>
+        <td>{{ ticket.user_data }}</td>
+        <td>{{ ticket.status }}</td>
+        <td>{{ ticket.description }}</td>
+        {% if current_user.role == 'support' %}
+        <td>
+            <form method="POST" action="/update_ticket/{{ ticket.id }}">
+                <select name="status">
+                    <option value="in process">In process</option>
+                    <option value="done">Done</option>
+                </select>
+                <button type="submit">Изменить</button>
+            </form>
+        </td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
 </body>
 </html>

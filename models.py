@@ -1,12 +1,14 @@
 from init import db
 from flask_login import UserMixin
 
+# Связь диалогов и сообщений
 dialog_participants = db.Table('dialog_participants',
                                db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
                                db.Column('dialog_id', db.Integer, db.ForeignKey('dialog.id'))
                                )
 
 
+# Диалоги
 class Dialog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     participants = db.relationship('User', secondary=dialog_participants, back_populates='dialogs')
@@ -34,6 +36,19 @@ class Service(db.Model):
     type = db.Column(db.String, nullable=False, default="business")
 
 
+# Таблица для заявок
+class Ticket(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    priority = db.Column(db.String(20), nullable=False, default="medium")  # medium/high
+    theme = db.Column(db.String(100), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
+    user_data = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="new")  # new/in process/done
+    description = db.Column(db.Text, nullable=False)
+    creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    service = db.relationship('Service', backref='tickets')
+
+
 # Модель пользователя
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -41,3 +56,4 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # Роли: 'client', 'employee', 'support'
     dialogs = db.relationship('Dialog', secondary=dialog_participants, back_populates='participants')
+    tickets = db.relationship('Ticket', backref='creator', lazy='dynamic')

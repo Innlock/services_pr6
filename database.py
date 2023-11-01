@@ -1,4 +1,4 @@
-from models import Service, User, Message
+from models import Service, User, Message, Ticket
 from init import db, app
 from sqlalchemy import inspect
 from werkzeug.security import generate_password_hash
@@ -75,9 +75,21 @@ def fill_users():
     db.session.commit()
 
 
+def fill_tickets():
+    tickets = [
+        ['Помогите', 1, 'user123@com', 'проблема не во мне', 1],
+        ['Помогите2', 2, 'user123@com', 'проблема не во мне 2', 1]
+    ]
+    for ticket in tickets:
+        new_ticket = Ticket(theme=ticket[0], service_id=ticket[1], user_data=ticket[2],
+                            description=ticket[3], creator_id=ticket[4])
+        db.session.add(new_ticket)
+        db.session.commit()
+
+
 fill_tables = False
 with app.app_context():
-    # drop_all_tables()
+    drop_all_tables()
     # проверить, существует ли таблица и выставить флаг, если нет
     inspector = inspect(db.engine)
     if "user" not in inspector.get_table_names() or "service" not in inspector.get_table_names():
@@ -90,3 +102,4 @@ with app.app_context():
     if fill_tables:
         fill_services()
         fill_users()
+        fill_tickets()
