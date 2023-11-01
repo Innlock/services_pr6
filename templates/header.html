@@ -50,12 +50,14 @@
 <div class="header">
     <ul class="tabs">
         <li><a href="/services">Services</a></li>
-        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/service_desk">Service desk</a></li>
+        {% if username != "client" %}
         <li><a href="/messenger">Messenger</a></li>
+        {% endif %}
     </ul>
     <div class="user-info">
         <span id="username">{{ username }}</span>
-        {% if username != "" and username != "Клиент" %}
+        {% if username != "client" %}
             <a href="/logout" id="logout">Выйти</a>
         {% else %}
             <a href="/login" id="login">Войти</a>

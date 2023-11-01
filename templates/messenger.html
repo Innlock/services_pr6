@@ -97,7 +97,7 @@
     <div class="dialogs">
         <h3>Диалоги</h3>
         {% for dialog in user_dialogs %}
-        <p class="dialog-list-item" data-dialog-id="{{ dialog.id }}">{{ dialog.id }}</p>
+        <p class="dialog-list-item" data-dialog-id="{{ dialog[1] }}">{{ dialog[0] }}</p>
         {% endfor %}
     </div>
 

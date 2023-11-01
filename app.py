@@ -15,7 +15,7 @@ def load_user(user_id):
 # Роут для главной страницы
 @app.route('/')
 def index():
-    return redirect(url_for('login'))
+    return redirect('/service_desk')
 
 
 # Роут для регистрации
@@ -37,7 +37,7 @@ def register():
         db.session.commit()
 
         login_user(new_user)
-        return redirect(url_for('dashboard'))
+        return redirect('/service_desk')
 
     return render_template('register.html')
 
@@ -51,7 +51,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
             login_user(user)
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('services'))
     return render_template('login.html')
 
 
@@ -60,19 +60,20 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('service_desk'))
 
 
 # Роут для панели управления
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    if current_user.role == 'client':
-        return "Панель управления клиента"
-    elif current_user.role == 'employee':
-        return "Панель управления рядового сотрудника"
-    elif current_user.role == 'support':
-        return "Панель управления сотрудника технической поддержки"
+@app.route('/service_desk')
+def service_desk():
+    username = get_username()
+    # if current_user.role == 'client':
+    #     return "Панель управления клиента"
+    # elif current_user.role == 'employee':
+    #     return "Панель управления рядового сотрудника"
+    # elif current_user.role == 'support':
+    #     return "Панель управления сотрудника технической поддержки"
+    return render_template('service_desk.html', username=username)
 
 
 # Роут для страницы сообщений
@@ -82,7 +83,18 @@ def dashboard():
 def messenger(dialog_id=None):
     if current_user.role == 'client':
         return "У вас нет доступа к этой странице"
-    user_dialogs = Dialog.query.filter(Dialog.participants.any(id=current_user.id)).all()
+    user_dialogs_id = Dialog.query.filter(Dialog.participants.any(id=current_user.id)).all()
+    for i in range(len(user_dialogs_id)):
+        user_dialogs_id[i] = user_dialogs_id[i].id
+    user_dialogs = (User.query
+                    .join(dialog_participants)
+                    .filter(dialog_participants.c.user_id == User.id)
+                    .filter(User.id != current_user.id)
+                    .filter(dialog_participants.c.dialog_id.in_(user_dialogs_id))
+                    .with_entities(User.username, dialog_participants.c.dialog_id)
+                    .all())
+    print(user_dialogs)
+
     all_users = User.query.all()
     return render_template('messenger.html', username=current_user.username, user_dialogs=user_dialogs,
                            all_users=all_users, dialog_id=dialog_id)
@@ -132,6 +144,13 @@ def send_message():
     return redirect('/messenger/' + str(dialog.id))
 
 
+def get_username():
+    username = "client"
+    if current_user.is_authenticated:
+        username = current_user.username
+    return username
+
+
 # Роут для страницы услуг
 @app.route('/services')
 def services():
@@ -140,9 +159,7 @@ def services():
     for serv in serv_business:
         composition = serv.composition.replace(".", ".\n")
         serv.composition = composition
-    username = "Клиент"
-    if current_user.is_authenticated:
-        username = current_user.username
+    username = get_username()
     return render_template('services.html', services_technical=serv_technical,
                            services_business=serv_business, username=username)
 
