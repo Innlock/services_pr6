@@ -18,28 +18,44 @@ def index():
     return redirect('/service_desk')
 
 
+def user_exists(username):
+    # Проверка наличия пользователя с таким именем
+    existing_user = User.query.filter_by(username=username).first()
+    if existing_user:
+        return "Пользователь с таким именем уже существует."
+    return False
+
+
+def create_user(username, password):
+    # Создание нового пользователя
+    role = 'employee'
+    new_user = User(username=username, password=generate_password_hash(password, salt_length=8), role=role)
+    db.session.add(new_user)
+    db.session.commit()
+
+    login_user(new_user)
+
+
 # Роут для регистрации
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        role = 'employee'
-
-        # Проверка наличия пользователя с таким именем
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            return "Пользователь с таким именем уже существует."
-
-        # Создание нового пользователя
-        new_user = User(username=username, password=generate_password_hash(password, salt_length=8), role=role)
-        db.session.add(new_user)
-        db.session.commit()
-
-        login_user(new_user)
+        user = user_exists(username)
+        if user:
+            return user
+        create_user(username, password)
         return redirect('/service_desk')
-
     return render_template('register.html')
+
+
+def log(username, password):
+    user = User.query.filter_by(username=username).first()
+    if user and check_password_hash(user.password, password):
+        login_user(user)
+        return user
+    return False
 
 
 # Роут для входа
@@ -48,9 +64,7 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
-            login_user(user)
+        if log(username, password):
             return redirect(url_for('services'))
     return render_template('login.html')
 
@@ -210,15 +224,20 @@ def get_username():
     return username
 
 
-# Роут для страницы услуг
-@app.route('/services')
-def services():
+def get_serv():
     serv_technical = Service.query.filter(Service.type == 'technical').all()
     serv_business = Service.query.filter(Service.type == 'business').all()
     for serv in serv_business:
         composition = serv.composition.replace(".", ".\n")
         serv.composition = composition
+    return serv_technical, serv_business
+
+
+# Роут для страницы услуг
+@app.route('/services')
+def services():
     username = get_username()
+    serv_technical, serv_business = get_serv()
     return render_template('services.html', services_technical=serv_technical,
                            services_business=serv_business, username=username)
 

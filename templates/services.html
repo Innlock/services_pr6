@@ -66,15 +66,15 @@
         <h2>Технический каталог услуг</h2>
         <table>
             <tr>
+                <th>Название группы</th>
                 <th>Название услуги</th>
                 <th>Единицы измерения услуги</th>
-                <th>Цена услуги</th>
             </tr>
             {% for service in services_technical %}
             <tr>
+                <td>{{ service.group_name }}</td>
                 <td>{{ service.name }}</td>
                 <td>{{ service.composition }}</td>
-                <td>{{ service.cost }}</td>
             </tr>
             {% endfor %}
         </table>

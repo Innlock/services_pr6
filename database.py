@@ -35,10 +35,10 @@ services_data1 = [
      "15000 руб", "business"]
 ]
 services_data2 = [
-    ["Услуги администрирования", "Веб-серверы и хостинг-ресурсы", "Месяц", "20000 руб", "technical"],
-    ["Услуги администрирования", "Облачные ресурсы", "Месяц", "20000 руб", "technical"],
-    ["Услуги администрирования", "Системы мониторинга и отчетности", "Месяц", "35000 руб", "technical"],
-    ["Услуги администрирования", "Серверное оборудование", "Месяц", "70000 руб", "technical"]
+    ["Услуги администрирования", "Веб-серверы и хостинг-ресурсы", "Месяц", "technical"],
+    ["Услуги администрирования", "Облачные ресурсы", "Месяц", "technical"],
+    ["Услуги администрирования", "Системы мониторинга и отчетности", "Месяц", "technical"],
+    ["Услуги администрирования", "Серверное оборудование", "Месяц", "technical"]
 ]
 users = [
     ["user1", "123", "employee"],
@@ -63,7 +63,7 @@ def fill_services():
         db.session.add(service)
     for service_name in services_data2:
         service = Service(group_name=service_name[0], name=service_name[1], composition=service_name[2],
-                          cost=service_name[3], type=service_name[4])
+                          type=service_name[3])
         db.session.add(service)
     db.session.commit()
 
