@@ -1,6 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_wtf import FlaskForm
+from wtforms import StringField, TextAreaField
+from wtforms.validators import InputRequired
+from datetime import datetime
 
 from database import drop_all_tables
 from models import User, Service, Message, Dialog, dialog_participants, Ticket
@@ -89,7 +93,8 @@ def service_desk():
         # Пользователи с ролью 'client' и 'employee'
         if request.method == 'POST':
             # Создание новой заявки
-            priority = request.form.get('priority')
+            priority = 'medium'
+            type = request.form.get('type')
             theme = request.form.get('theme')
             service_id = request.form.get('service')
             user_data = request.form.get('user_data')
@@ -102,7 +107,8 @@ def service_desk():
                 if current_user.is_authenticated:
                     creator = current_user
                 new_ticket = Ticket(priority=priority, theme=theme, service_id=service_id,
-                                    user_data=user_data, description=description, creator=creator)
+                                    user_data=user_data, description=description, creator=creator,
+                                    type=type, date=datetime.now())
                 db.session.add(new_ticket)
                 db.session.commit()
                 return 'Заявка успешно создана!'
@@ -112,7 +118,7 @@ def service_desk():
         type_serv = 'business'
         if current_user.is_authenticated:
             type_serv = 'technical'
-            tickets = current_user.tickets.all()
+            tickets = current_user.creator_tickets.all()
         serv = Service.query.filter(Service.type == type_serv).all()
     return render_template('service_desk.html', tickets=tickets, services=serv, username=username)
 
@@ -131,10 +137,18 @@ def update_ticket(ticket_id):
 
     # Обновите статус заявки (в работе/выполнена)
     new_status = request.form.get('status')
-    if new_status and new_status in ('in process', 'done'):
+    new_priority = request.form.get('priority')
+    if new_status and new_status in ('new', 'process', 'done') or new_priority:
         ticket.status = new_status
+        ticket.priority = new_priority
         db.session.commit()
-        flash('Статус заявки обновлен!')
+        flash('Заявка обновлена!')
+    if 'assign' in request.form:
+        if current_user.role == 'support':
+            ticket.accountable = current_user.id
+            db.session.commit()
+        else:
+            flash('Вы не можете назначить себя ответственным.')
 
     return redirect(url_for('service_desk'))
 
@@ -240,6 +254,59 @@ def services():
     serv_technical, serv_business = get_serv()
     return render_template('services.html', services_technical=serv_technical,
                            services_business=serv_business, username=username)
+
+
+class ServiceForm(FlaskForm):
+    group_name = StringField('Название группы', validators=[InputRequired()])
+    name = StringField('Название услуги', validators=[InputRequired()])
+    composition = TextAreaField('Состав услуги')
+    description = TextAreaField('Описание услуги')
+    cost = StringField('Цена услуги')
+
+
+# Добавление услуги
+@app.route('/add_service', methods=['GET', 'POST'])
+@login_required
+def add_service():
+    form = ServiceForm()
+    if form.validate_on_submit():
+        service = Service(
+            group_name=form.group_name.data,
+            name=form.name.data,
+            composition=form.composition.data,
+            description=form.description.data,
+            cost=form.cost.data
+        )
+        db.session.add(service)
+        db.session.commit()
+        flash('Услуга добавлена успешно', 'success')
+        return redirect(url_for('services'))
+    return render_template('add_service.html', form=form)
+
+
+# Редактирование услуги
+@app.route('/edit_service/<int:service_id>', methods=['GET', 'POST'])
+@login_required
+def edit_service(service_id):
+    service = Service.query.get_or_404(service_id)
+    form = ServiceForm(obj=service)
+    if form.validate_on_submit():
+        form.populate_obj(service)
+        db.session.commit()
+        flash('Услуга отредактирована успешно', 'success')
+        return redirect(url_for('services'))
+    return render_template('edit_service.html', form=form, service=service)
+
+
+# Удаление услуги
+@app.route('/delete_service/<int:service_id>', methods=['POST'])
+@login_required
+def delete_service(service_id):
+    service = Service.query.get_or_404(service_id)
+    db.session.delete(service)
+    db.session.commit()
+    flash('Услуга удалена успешно', 'success')
+    return redirect(url_for('services'))
 
 
 if __name__ == '__main__':

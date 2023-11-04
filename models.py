@@ -1,5 +1,6 @@
 from init import db
 from flask_login import UserMixin
+from datetime import datetime
 
 # Связь диалогов и сообщений
 dialog_participants = db.Table('dialog_participants',
@@ -45,6 +46,9 @@ class Ticket(db.Model):
     user_data = db.Column(db.String(100), nullable=False)
     status = db.Column(db.String(20), nullable=False, default="new")  # new/in process/done
     description = db.Column(db.Text, nullable=False)
+    date = db.Column(db.DateTime, nullable=False, default=datetime.now())
+    type = db.Column(db.String(20), nullable=False, default="incident")  # incident/error
+    accountable = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     service = db.relationship('Service', backref='tickets')
 
@@ -56,4 +60,6 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # Роли: 'client', 'employee', 'support'
     dialogs = db.relationship('Dialog', secondary=dialog_participants, back_populates='participants')
-    tickets = db.relationship('Ticket', backref='creator', lazy='dynamic')
+    creator_tickets = db.relationship('Ticket', foreign_keys='Ticket.creator_id', backref='creator', lazy='dynamic')
+    assigned_tickets = db.relationship('Ticket', foreign_keys='Ticket.accountable', backref='accountable_user',
+                                       lazy='dynamic')

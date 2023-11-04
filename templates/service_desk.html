@@ -9,6 +9,7 @@
             margin: 0;
             padding: 0;
         }
+
         h1 {
             text-align: center;
         }
@@ -65,9 +66,9 @@
 <h1>Service Desk</h1>
 {% if current_user.role != 'support' %}
 <form method="POST">
-    <select name="priority">
-        <option value="medium">Medium</option>
-        <option value="high">High</option>
+    <select name="type">
+        <option value="incident">Инцидент</option>
+        <option value="error">Ошибка</option>
     </select>
     <input type="text" name="theme" placeholder="Тема" required>
     <select name="service">
@@ -84,30 +85,49 @@
 {% if current_user.is_authenticated %}
 <table>
     <tr>
+        <th>Дата регистрации</th>
+        <th>Тип заявки</th>
         <th>Приоритет</th>
         <th>Тема</th>
         <th>Услуга</th>
         <th>Данные о пользователе</th>
         <th>Статус</th>
         <th>Описание</th>
+        <th>Отправитель</th>
+        <th>Ответственный</th>
         {% if current_user.role == 'support' %}
-        <th>Изменить статус</th>
+        <th>Изменить статус/приоритет</th>
         {% endif %}
     </tr>
     {% for ticket in tickets %}
     <tr>
+        <td>{{ ticket.date.strftime("%d/%m/%Y %H:%M:%S") }}</td>
+        <td>{{ ticket.type }}</td>
         <td>{{ ticket.priority }}</td>
         <td><a href="{{ url_for('ticket_description', ticket_id=ticket.id) }}">{{ ticket.theme }}</a></td>
         <td>{{ ticket.service.name }}</td>
         <td>{{ ticket.user_data }}</td>
         <td>{{ ticket.status }}</td>
         <td>{{ ticket.description }}</td>
+        <td>{{ ticket.creator.username if ticket.creator_id else 'client' }}</td>
+        <td>{{ ticket.accountable_user.username if ticket.accountable else '-' }}
+            {% if current_user.role == 'support' %}
+            <form method="POST" action="/update_ticket/{{ ticket.id }}">
+                <button type="submit" name="assign" class="btn btn-primary">Назначить себя ответственным</button>
+            </form>
+            {% endif %}
+        </td>
         {% if current_user.role == 'support' %}
         <td>
             <form method="POST" action="/update_ticket/{{ ticket.id }}">
                 <select name="status">
+                    <option value="new">New</option>
                     <option value="in process">In process</option>
                     <option value="done">Done</option>
+                </select>
+                <select name="priority">
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
                 </select>
                 <button type="submit">Изменить</button>
             </form>

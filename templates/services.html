@@ -9,6 +9,7 @@
             margin: 0;
             padding: 0;
         }
+
         .container {
             max-width: 90%;
             margin: 0 auto;
@@ -17,23 +18,28 @@
             border-radius: 5px;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
         }
+
         h2 {
             text-align: center;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
+
         th, td {
             padding: 10px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
+
         th {
             background-color: #007BFF;
             color: #fff;
         }
+
         tr:nth-child(even) {
             background-color: #f2f2f2;
         }
@@ -41,43 +47,56 @@
 </head>
 <body>
 {% include 'header.html' %}
-    <div class="container">
-        <h2>Каталог услуг для бизнеса</h2>
-        <table>
-            <tr>
-                <th>Название группы</th>
-                <th>Название услуги</th>
-                <th>Состав услуги</th>
-                <th>Описание услуги</th>
-                <th>Цена услуги*</th>
-            </tr>
-            {% for service in services_business %}
-            <tr>
-                <td>{{ service.group_name }}</td>
-                <td>{{ service.name }}</td>
-                <td>{{ service.composition }}</td>
-                <td>{{ service.description }}</td>
-                <td>{{ service.cost }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-        <p>*Цена услуги указана за полный рабочий день, может варьироваться в зависимости от сложности заказа</p>
-        <hr>
-        <h2>Технический каталог услуг</h2>
-        <table>
-            <tr>
-                <th>Название группы</th>
-                <th>Название услуги</th>
-                <th>Единицы измерения услуги</th>
-            </tr>
-            {% for service in services_technical %}
-            <tr>
-                <td>{{ service.group_name }}</td>
-                <td>{{ service.name }}</td>
-                <td>{{ service.composition }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
+<div class="container">
+    <h2>Каталог услуг для бизнеса</h2>
+    <table>
+        <tr>
+            <th>Название группы</th>
+            <th>Название услуги</th>
+            <th>Состав услуги</th>
+            <th>Описание услуги</th>
+            <th>Цена услуги*</th>
+        </tr>
+        {% for service in services_business %}
+        <tr>
+            <td>{{ service.group_name }}</td>
+            <td>{{ service.name }}</td>
+            <td>{{ service.composition }}</td>
+            <td>{{ service.description }}</td>
+            <td>{{ service.cost }}</td>
+            {% if current_user.is_authenticated %}
+            <td>
+                <a href="{{ url_for('edit_service', service_id=service.id) }}" class="btn btn-sm btn-primary">Редактировать</a>
+                <form method="POST" action="{{ url_for('delete_service', service_id=service.id) }}">
+                    <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
+                </form>
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('add_service') }}" class="btn btn-sm btn-primary">Добавить услугу</a>
+    {% endif %}
+    <p>*Цена услуги указана за полный рабочий день, может варьироваться в зависимости от сложности заказа</p>
+    {% if current_user.is_authenticated %}
+    <hr>
+    <h2>Технический каталог услуг</h2>
+    <table>
+        <tr>
+            <th>Название группы</th>
+            <th>Название услуги</th>
+            <th>Компоненты услуги</th>
+        </tr>
+        {% for service in services_technical %}
+        <tr>
+            <td>{{ service.group_name }}</td>
+            <td>{{ service.name }}</td>
+            <td>{{ service.composition }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+</div>
 </body>
 </html>

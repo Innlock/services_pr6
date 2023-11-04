@@ -27,18 +27,31 @@
 <body>
 <h1>Заявка #{{ ticket.id }}</h1>
 <div class="ticket-details">
+    <p><strong>Дата:</strong> {{ ticket.date.strftime("%d/%m/%Y %H:%M:%S") }}</p>
+    <p><strong>Тип:</strong> {{ ticket.type }}</p>
     <p><strong>Приоритет:</strong> {{ ticket.priority }}</p>
     <p><strong>Тема:</strong> {{ ticket.theme }}</p>
     <p><strong>Услуга:</strong> {{ ticket.service.name }}</p>
     <p><strong>Данные о пользователе:</strong> {{ ticket.user_data }}</p>
     <p><strong>Статус:</strong> {{ ticket.status }}</p>
     <p><strong>Описание:</strong> {{ ticket.description }}</p>
+    <p><strong>Отправитель:</strong> {{ ticket.creator.username if ticket.creator_id else 'client' }}</p>
+    <p><strong>Ответственный:</strong> {{ ticket.accountable_user.username if ticket.accountable else '-' }} {% if current_user.role == 'support' %}
+    <form method="POST" action="/update_ticket/{{ ticket.id }}">
+        <button type="submit" name="assign" class="btn btn-primary">Назначить себя ответственным</button>
+    </form>
+    {% endif %}</p>
     {% if current_user.role == 'support' %}
     <p>
     <form method="POST" action="/update_ticket/{{ ticket.id }}">
         <select name="status">
+            <option value="new">New</option>
             <option value="in process">In process</option>
             <option value="done">Done</option>
+        </select>
+        <select name="priority">
+            <option value="medium">medium</option>
+            <option value="high">high</option>
         </select>
         <button type="submit">Изменить</button>
     </form>
