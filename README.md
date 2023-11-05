@@ -4,4 +4,4 @@
 - `pip uninstall -y Werkzeug`
 - `pip install Werkzeug==2.3.7`
 
-Запустить доккер. В папке с проектом запустить команду `docker-compose up` для запуска бд. Далее выполнить команду `python app.py `.
+Запустить доккер. В папке с проектом запустить команду `docker-compose up` для запуска бд. Далее выполнить команду `python app.py`.
